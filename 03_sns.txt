@@ -1,0 +1,11 @@
+{
+  "generated_at": "まだ生成されていません",
+  "theme": "中東情勢の再燃と建材価格への影響",
+  "report_text": "",
+  "sns_text": "",
+  "email_subject": "",
+  "email_body": "",
+  "notebooklm_text": "",
+  "stamp": "",
+  "drive_folder": ""
+}

@@ -1,0 +1,54 @@
+name: 週次レポート自動生成
+
+on:
+  schedule:
+    # UTC表記。日本時間(JST)は+9時間。
+    # 火曜 朝7:00 JST = 月曜 22:00 UTC
+    # 金曜 朝7:00 JST = 木曜 22:00 UTC
+    - cron: "0 22 * * 1,4"
+  # 手動実行（アプリの「今すぐ生成」ボタンもこれを使う）
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 生成データをdocsに書き込むため
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Python環境をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 依存パッケージをインストール
+        run: pip install -r requirements.txt
+
+      - name: 日本語フォントをインストール
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+
+      - name: レポート生成を実行
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
+        run: python main.py
+
+      - name: 生成データをアプリ(docs)に反映
+        run: |
+          git config user.name "markey-bot"
+          git config user.email "bot@markey.local"
+          git add docs/data
+          git diff --staged --quiet || git commit -m "週次レポート生成 $(date +%Y-%m-%d)"
+          git push
+
+      - name: バックアップ（30日保管）
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-report
+          path: output/
+          retention-days: 30
