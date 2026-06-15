@@ -1,30 +1,35 @@
-あなたは情報設計の専門家です。
-以下のレポートを、NotebookLMに読み込ませて「1枚のインフォグラフィック」を
-作るための入力素材（要約テキスト）に変換してください。
+"""
+初回認証スクリプト（最初の1回だけ実行する）
 
-# レポート内容
-{report}
+使い方：
+1. Google Cloud で OAuth クライアント（デスクトップアプリ）を作成し、
+   client_secret.json をこのフォルダに置く
+2. このスクリプトを実行：  python authorize.py
+3. ブラウザが開くので、m.tsu... のGoogleアカウントでログイン・許可
+4. token.json が作られる
+5. token.json の中身を GitHub Secret「GOOGLE_TOKEN」に貼り付ける
 
-# 作成ルール
-- インフォグラフィック1枚に収まる情報量に圧縮する
-- 視覚化しやすいよう「数字」「対比」「3つのポイント」などの構造を意識する
-- 専門用語は最小限にし、ひと目で伝わる表現にする
+これで GitHub Actions 上でもあなたのGoogleアカウントとして
+Drive保存・Gmail下書き作成ができるようになる。
+"""
+from google_auth_oauthlib.flow import InstalledAppFlow
 
-# 出力形式（必ずこの形式）
-タイトル: （20字以内のキャッチ-）
+SCOPES = [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/gmail.compose",
+]
 
-■ 今の市場で起きていること（2〜3行）
-（本文）
 
-■ 注目すべき数字・事実（箇条書き3つ）
-- 
-- 
-- 
+def main():
+    flow = InstalledAppFlow.from_client_secrets_file("client_secret.json", SCOPES)
+    creds = flow.run_local_server(port=0)
+    with open("token.json", "w") as f:
+        f.write(creds.to_json())
+    print("\n✅ token.json を作成しました。")
+    print("   この中身を GitHub Secret『GOOGLE_TOKEN』に貼り付けてください。\n")
+    print("--- token.json の中身（ここから下をコピー）---\n")
+    print(creds.to_json())
 
-■ 住宅会社が今すぐやるべき3つのこと
-1. 
-2. 
-3. 
 
-■ ひとことメッセージ（締めの一文）
-（本文）
+if __name__ == "__main__":
+    main()
