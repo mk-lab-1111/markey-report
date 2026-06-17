@@ -1,0 +1,7 @@
+client_secret.json
+token.json
+scripts/client_secret.json
+scripts/token.json
+*.pyc
+__pycache__/
+output/
