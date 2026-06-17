@@ -4,10 +4,10 @@
 
 # 今週のメインテーマ（空欄でOK。空の場合はGeminiが自動で時事ネタからテーマを選びます）
 # 指定したい場合のみ書く（例: "中東情勢の再燃と建材価格への影響"）
-theme: ""
+theme: "金利急騰と建材高騰の継続"
 
 # 検索キーワード（任意。空でも自動探索します。指定すると検索の方向づけに使われます）
-keywords: "住宅業界 建材 価格 受注 金利 制度 工務店"
+keywords: "住宅業界 建材 価格 受注 中東情勢 原油 工務店"
 
 # 使用するメールの型（v1_event / v2_simple / v3_gift）
 # v1_event: セミナー・イベント案内パターン
@@ -25,7 +25,7 @@ sender:
 
 # 使用するGeminiモデル（無料枠で十分。基本変えなくてOK）
 # 速度優先: gemini-2.5-flash  /  品質優先: gemini-2.5-pro
-model: "gemini-2.5-flash"
+model: "gemini-2.0-flash"
 
 # Google Drive 保存先フォルダID（任意。空ならマイドライブ直下に作成）
 drive_folder_id: ""
