@@ -3,13 +3,17 @@
 GitHub Actions から呼び出される。基本的に編集不要。
 文章の型を変えたい → prompts/ フォルダを編集（またはアプリの編集画面）
 今週のテーマを変えたい → config.yaml を編集（またはアプリの設定画面）
+
+【重要】google-generativeai は2026年に廃止されたため、
+新しい google-genai SDK を使用している。
 """
 import os
 import sys
 import json
 import datetime
 import yaml
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from report_builder import build_report_docx
@@ -26,11 +30,17 @@ def load_prompt(name):
         return f.read()
 
 
-def ask_gemini(model, prompt, use_search=False):
+def ask_gemini(client, model, prompt, use_search=False):
     """Geminiに1回問い合わせる。use_search=Trueで検索グラウンディング有効"""
-    tools = "google_search_retrieval" if use_search else None
-    m = genai.GenerativeModel(model_name=model, tools=tools)
-    resp = m.generate_content(prompt)
+    config = None
+    if use_search:
+        grounding_tool = types.Tool(google_search=types.GoogleSearch())
+        config = types.GenerateContentConfig(tools=[grounding_tool])
+    resp = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=config,
+    )
     return resp.text.strip()
 
 
@@ -38,8 +48,8 @@ def main():
     with open(os.path.join(BASE, "config.yaml"), encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
 
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = cfg.get("model", "gemini-2.0-flash")
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    model = cfg.get("model", "gemini-2.5-flash")
     sender = cfg["sender"]
     today = datetime.date.today().strftime("%Y年%m月%d日")
     stamp = datetime.date.today().strftime("%Y%m%d")
@@ -50,27 +60,27 @@ def main():
 
     print("① 情報収集中...")
     research = ask_gemini(
-        model,
+        client, model,
         load_prompt("01_research.txt").format(keywords=cfg["keywords"], theme=cfg["theme"]),
         use_search=True,
     )
 
     print("② レポート生成中...")
     report = ask_gemini(
-        model,
+        client, model,
         load_prompt("02_report.txt").format(theme=cfg["theme"], research=research, today=today),
     )
 
     print("③ SNS投稿生成中...")
-    sns = ask_gemini(model, load_prompt("03_sns.txt").format(report=report))
+    sns = ask_gemini(client, model, load_prompt("03_sns.txt").format(report=report))
 
     print("④ メール文面生成中...")
-    email_raw = ask_gemini(model, load_prompt("04_email.txt").format(theme=cfg["theme"]))
+    email_raw = ask_gemini(client, model, load_prompt("04_email.txt").format(theme=cfg["theme"]))
     subject, _, email_body = email_raw.partition("---")
     subject = subject.replace("SUBJECT:", "").strip() or f"{cfg['theme']}に関する各社対応事例のご共有"
 
     print("⑤ NotebookLM素材生成中...")
-    notebooklm = ask_gemini(model, load_prompt("05_notebooklm.txt").format(report=report))
+    notebooklm = ask_gemini(client, model, load_prompt("05_notebooklm.txt").format(report=report))
 
     # --- ファイル出力 ---
     docx_path = os.path.join(OUTPUT, f"report_{stamp}.docx")
