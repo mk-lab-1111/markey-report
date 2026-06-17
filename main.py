@@ -59,15 +59,9 @@ def main():
     print(f"▶ 指定テーマ: {cfg['theme'] or '（未指定・自動探索）'}")
 
     print("① 情報収集中...")
-<<<<<<< HEAD
     research_raw = ask_gemini(
         client, model,
         load_prompt("01_research.txt").format(keywords=cfg.get("keywords", ""), theme=cfg.get("theme", "")),
-=======
-    research = ask_gemini(
-        client, model,
-        load_prompt("01_research.txt").format(keywords=cfg["keywords"], theme=cfg["theme"]),
->>>>>>> f3c0f6a06917e3646583aeb604ff1872934d4c0f
         use_search=True,
     )
 
@@ -85,18 +79,13 @@ def main():
     print("② レポート生成中...")
     report = ask_gemini(
         client, model,
-<<<<<<< HEAD
         load_prompt("02_report.txt").format(theme=theme, research=research, today=today),
-=======
-        load_prompt("02_report.txt").format(theme=cfg["theme"], research=research, today=today),
->>>>>>> f3c0f6a06917e3646583aeb604ff1872934d4c0f
     )
 
     print("③ SNS投稿生成中...")
     sns = ask_gemini(client, model, load_prompt("03_sns.txt").format(report=report))
 
     print("④ メール文面生成中...")
-<<<<<<< HEAD
     email_template_name = cfg.get("email_template", "v2_simple")
     email_prompt_file = f"04_email_{email_template_name}.txt"
     if not os.path.exists(os.path.join(PROMPTS, email_prompt_file)):
@@ -105,9 +94,6 @@ def main():
         client, model,
         load_prompt(email_prompt_file).format(theme=theme, report=report),
     )
-=======
-    email_raw = ask_gemini(client, model, load_prompt("04_email.txt").format(theme=cfg["theme"]))
->>>>>>> f3c0f6a06917e3646583aeb604ff1872934d4c0f
     subject, _, email_body = email_raw.partition("---")
     subject = subject.replace("SUBJECT:", "").strip() or f"{theme}に関する各社対応事例のご共有"
 
