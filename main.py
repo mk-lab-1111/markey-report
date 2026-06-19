@@ -89,6 +89,15 @@ def ask_gemini(client, model, prompt, use_search=False, max_retries=6):
                 continue
             # 一時的でないエラー、またはリトライ上限に達したら諦める
             raise
+    # 全リトライ失敗。検索グラウンディング使用時は、検索なしで再挑戦する（フォールバック）
+    if use_search:
+        print("   ⚠ 検索付きでは失敗しました。検索なしで再挑戦します...")
+        try:
+            resp = client.models.generate_content(model=model, contents=prompt)
+            _last_call_time[0] = time.time()
+            return resp.text.strip()
+        except Exception:
+            pass  # フォールバックも失敗したら元のエラーを投げる
     raise last_err
 
 
