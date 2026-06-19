@@ -100,6 +100,7 @@ def main():
     model = cfg.get("model", "gemini-2.5-flash")
     sender = cfg["sender"]
     today = datetime.date.today().strftime("%Y年%m月%d日")
+    year = datetime.date.today().strftime("%Y")
     stamp = datetime.date.today().strftime("%Y%m%d")
     os.makedirs(OUTPUT, exist_ok=True)
     os.makedirs(os.path.join(DOCS, "data"), exist_ok=True)
@@ -109,7 +110,7 @@ def main():
     print("① 情報収集中...")
     research_raw = ask_gemini(
         client, model,
-        load_prompt("01_research.txt").format(keywords=cfg.get("keywords", ""), theme=cfg.get("theme", "")),
+        load_prompt("01_research.txt").format(keywords=cfg.get("keywords", ""), theme=cfg.get("theme", ""), today=today, year=year),
         use_search=True,
     )
 
@@ -127,7 +128,7 @@ def main():
     print("② レポート生成中...")
     report = ask_gemini(
         client, model,
-        load_prompt("02_report.txt").format(theme=theme, research=research, today=today),
+        load_prompt("02_report.txt").format(theme=theme, research=research, today=today, year=year),
     )
 
     print("③ SNS投稿生成中...")
