@@ -141,7 +141,7 @@ def main():
     )
 
     print("③ SNS投稿生成中...")
-    sns = ask_gemini(client, model, load_prompt("03_sns.txt").format(report=report))
+    sns = ask_gemini(client, model, load_prompt("03_sns.txt").format(report=report, year=year))
 
     print("④ メール文面生成中（3パターン）...")
     # 3つのトーン（丁寧／シンプル／簡潔）でそれぞれ生成する
