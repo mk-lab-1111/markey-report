@@ -10,6 +10,7 @@ GitHub Actions から呼び出される。基本的に編集不要。
 import os
 import sys
 import json
+import time
 import datetime
 import yaml
 from google import genai
@@ -30,18 +31,52 @@ def load_prompt(name):
         return f.read()
 
 
-def ask_gemini(client, model, prompt, use_search=False):
-    """Geminiに1回問い合わせる。use_search=Trueで検索グラウンディング有効"""
+_last_call_time = [0.0]  # 直近のAPI呼び出し時刻を記録（1分制限対策の間隔調整用）
+MIN_INTERVAL = 7  # 各呼び出しの最低間隔（秒）。無料枠の1分制限(RPM)に当たりにくくする
+
+
+def ask_gemini(client, model, prompt, use_search=False, max_retries=4):
+    """Geminiに1回問い合わせる。use_search=Trueで検索グラウンディング有効。
+    無料枠のレート制限(429)に当たった場合は、待ってから自動でやり直す。
+    また、呼び出しが立て続けにならないよう最低間隔を空ける。"""
+    # 前回の呼び出しから MIN_INTERVAL 秒未満なら、その分だけ待つ
+    elapsed = time.time() - _last_call_time[0]
+    if elapsed < MIN_INTERVAL:
+        time.sleep(MIN_INTERVAL - elapsed)
+
     config = None
     if use_search:
         grounding_tool = types.Tool(google_search=types.GoogleSearch())
         config = types.GenerateContentConfig(tools=[grounding_tool])
-    resp = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=config,
-    )
-    return resp.text.strip()
+
+    last_err = None
+    for attempt in range(max_retries):
+        try:
+            resp = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=config,
+            )
+            _last_call_time[0] = time.time()
+            return resp.text.strip()
+        except Exception as e:
+            last_err = e
+            msg = str(e)
+            # レート制限(429 / RESOURCE_EXHAUSTED)のときだけ待ってリトライ
+            is_rate_limit = "429" in msg or "RESOURCE_EXHAUSTED" in msg or "quota" in msg.lower()
+            if is_rate_limit and attempt < max_retries - 1:
+                # 待機秒数：エラーに retryDelay があればそれを使い、なければ指数的に増やす
+                wait = 20 * (attempt + 1)  # 20s, 40s, 60s...
+                import re as _re
+                m = _re.search(r"retryDelay['\"]?:\s*['\"]?(\d+)", msg)
+                if m:
+                    wait = max(wait, int(m.group(1)) + 3)
+                print(f"   ⏳ レート制限のため {wait}秒待って再試行します（{attempt+1}/{max_retries-1}）")
+                time.sleep(wait)
+                continue
+            # レート制限以外のエラー、またはリトライ上限に達したら諦める
+            raise
+    raise last_err
 
 
 def main():
@@ -85,17 +120,43 @@ def main():
     print("③ SNS投稿生成中...")
     sns = ask_gemini(client, model, load_prompt("03_sns.txt").format(report=report))
 
-    print("④ メール文面生成中...")
-    email_template_name = cfg.get("email_template", "v2_simple")
-    email_prompt_file = f"04_email_{email_template_name}.txt"
-    if not os.path.exists(os.path.join(PROMPTS, email_prompt_file)):
-        email_prompt_file = "04_email_v2_simple.txt"
-    email_raw = ask_gemini(
-        client, model,
-        load_prompt(email_prompt_file).format(theme=theme, report=report),
-    )
-    subject, _, email_body = email_raw.partition("---")
-    subject = subject.replace("SUBJECT:", "").strip() or f"{theme}に関する各社対応事例のご共有"
+    print("④ メール文面生成中（3パターン）...")
+    # 3つのトーン（丁寧／シンプル／簡潔）でそれぞれ生成する
+    email_patterns = [
+        ("v1_polite", "丁寧・関係重視"),
+        ("v2_simple", "シンプル・標準"),
+        ("v3_short",  "簡潔・スピード"),
+    ]
+    email_variants = []
+    for tmpl_name, label in email_patterns:
+        email_prompt_file = f"04_email_{tmpl_name}.txt"
+        if not os.path.exists(os.path.join(PROMPTS, email_prompt_file)):
+            # テンプレートが無い場合はv2_simpleで代替
+            email_prompt_file = "04_email_v2_simple.txt"
+        try:
+            email_raw = ask_gemini(
+                client, model,
+                load_prompt(email_prompt_file).format(theme=theme, report=report),
+            )
+            v_subject, _, v_body = email_raw.partition("---")
+            v_subject = v_subject.replace("SUBJECT:", "").strip() or f"{theme}に関する各社対応事例のご共有"
+            email_variants.append({
+                "id": tmpl_name,
+                "label": label,
+                "subject": v_subject,
+                "body": v_body.strip(),
+            })
+            print(f"   ✓ {label} 生成完了")
+        except Exception as e:
+            print(f"   ⚠ {label} の生成に失敗: {e}")
+
+    # 後方互換：1案目（または最初に成功したもの）を代表として従来フィールドにも入れる
+    if email_variants:
+        subject = email_variants[0]["subject"]
+        email_body = email_variants[0]["body"]
+    else:
+        subject = f"{theme}に関する各社対応事例のご共有"
+        email_body = ""
 
     print("⑤ NotebookLM素材生成中...")
     notebooklm = ask_gemini(client, model, load_prompt("05_notebooklm.txt").format(report=report))
@@ -120,6 +181,7 @@ def main():
         "sns_text": sns,
         "email_subject": subject,
         "email_body": email_body.strip(),
+        "email_variants": email_variants,
         "notebooklm_text": notebooklm,
         "stamp": stamp,
         "drive_folder": "",
