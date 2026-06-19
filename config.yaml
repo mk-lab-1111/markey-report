@@ -9,11 +9,10 @@ theme: "金利急騰と建材高騰の継続"
 # 検索キーワード（任意。空でも自動探索します。指定すると検索の方向づけに使われます）
 keywords: "住宅業界 建材 価格 受注 中東情勢 原油 工務店"
 
-# 使用するメールの型（v1_event / v2_simple / v3_gift）
-# v1_event: セミナー・イベント案内パターン
-# v2_simple: シンプルな資料共有パターン（標準）
-# v3_gift: 資料プレゼントパターン（短縮版）
-email_template: "v2_simple"
+# メールは毎回3パターン自動生成されます（丁寧／シンプル／簡潔）。
+# アプリの画面で3つから選んでGmail下書きに送れます。
+# ↓ ここは下書き(Gmail連携)に使う代表パターンの指定です（通常はv1_politeでOK）
+email_template: "v1_polite"
 
 # 会社差出人情報（署名に使われます。基本は変えなくてOK）
 sender:
@@ -25,7 +24,7 @@ sender:
 
 # 使用するGeminiモデル（無料枠で十分。基本変えなくてOK）
 # 速度優先: gemini-2.5-flash  /  品質優先: gemini-2.5-pro
-model: "gemini-2.0-flash"
+model: "gemini-2.5-flash"
 
 # Google Drive 保存先フォルダID（任意。空ならマイドライブ直下に作成）
 drive_folder_id: ""
