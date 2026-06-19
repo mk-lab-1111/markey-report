@@ -145,10 +145,18 @@ def main():
 
     print("④ メール文面生成中（3パターン）...")
     # 3つのトーン（丁寧／シンプル／簡潔）でそれぞれ生成する
+    # 全メールの末尾に付ける定型の締め文
+    EMAIL_CLOSING = (
+        "\n\n何かご不明な点やご質問等ございましたら、お気軽にメールにてご返信いただければ幸いです。\n\n"
+        "差しつかえがなければ、引き続き有益な時事情報や弊社での成果手法・イベント情報などの"
+        "ご共有をさせていただければと思います。\n"
+        "成果につながる情報提供を心掛けて参りますので、今後とも何卒宜しくお願い申し上げます。"
+    )
+
     email_patterns = [
         ("v1_polite", "丁寧・関係重視"),
         ("v2_simple", "シンプル・標準"),
-        ("v3_short",  "簡潔・スピード"),
+        ("v3_summary", "メルマガ・要約型"),
     ]
     email_variants = []
     for tmpl_name, label in email_patterns:
@@ -167,7 +175,7 @@ def main():
                 "id": tmpl_name,
                 "label": label,
                 "subject": v_subject,
-                "body": v_body.strip(),
+                "body": v_body.strip() + EMAIL_CLOSING,
             })
             print(f"   ✓ {label} 生成完了")
         except Exception as e:
