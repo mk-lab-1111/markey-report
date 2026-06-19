@@ -7,8 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
   :root {
     --purple: #270949;
@@ -427,6 +425,7 @@
       <button class="modal-close" onclick="closeModal('mail-modal')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
+      <div class="sns-tabs" id="mail-tabs"></div>
       <div class="modal-field"><label>件名</label><div class="modal-text" id="mail-subject"></div></div>
       <div class="modal-field"><label>本文</label><div class="modal-text" id="mail-body"></div></div>
     </div>
@@ -776,42 +775,50 @@ const GH = {
   // ============================================================
   function downloadWord() {
     if (!LATEST) { toast('レポートがまだ読み込まれていません'); return; }
-    if (typeof docx === 'undefined') { toast('Word生成ライブラリの読み込み中です。少し待って再度お試しください'); return; }
     try {
       const body = document.getElementById('doc-body');
       const stamp = LATEST.stamp || '';
-      const fname = stamp ? `report_${stamp}.docx` : 'report.docx';
-      const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } = docx;
-      const children = [];
-      // 修正モードで編集された内容を優先（doc-body の表示中HTMLから読む）
+      const fname = stamp ? `report_${stamp}.doc` : 'report.doc';
       const nodes = body.children;
-      if (nodes.length && !(nodes.length===1 && nodes[0].tagName==='P' && /読み込み|生成されていません/.test(nodes[0].textContent))) {
+      let inner = '';
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const hasContent = nodes.length && !(nodes.length===1 && nodes[0].tagName==='P' && /読み込み|生成されていません/.test(nodes[0].textContent));
+      if (hasContent) {
         for (const el of nodes) {
           const txt = el.textContent.trim();
           if (!txt) continue;
-          if (el.tagName === 'H2') {
-            children.push(new Paragraph({ children:[new TextRun({ text: txt, bold:true, size:30, font:'游ゴシック', color:'270949' })], spacing:{ after:120 }, border:{ bottom:{ color:'F7D45C', size:18, style:BorderStyle.SINGLE, space:6 } } }));
-          } else if (el.tagName === 'DIV' && el.className === 'date') {
-            children.push(new Paragraph({ children:[new TextRun({ text: txt, size:18, color:'968CA6' })], alignment:AlignmentType.RIGHT, spacing:{ after:200 } }));
-          } else if (el.tagName === 'H3') {
-            children.push(new Paragraph({ children:[new TextRun({ text: txt, bold:true, size:24, font:'游ゴシック', color:'4D2080' })], spacing:{ before:200, after:100 } }));
-          } else if (el.tagName === 'H4') {
-            children.push(new Paragraph({ children:[new TextRun({ text: txt, bold:true, size:21, font:'游ゴシック', color:'241A32' })], spacing:{ before:120, after:40 } }));
-          } else if (el.className === 'closing') {
-            children.push(new Paragraph({ children:[new TextRun({ text: txt, size:19, color:'5E5470', italics:true })], spacing:{ before:200 }, border:{ left:{ color:'F7D45C', size:18, style:BorderStyle.SINGLE, space:10 } } }));
-          } else {
-            children.push(new Paragraph({ children:[new TextRun({ text: txt, size:21, font:'游ゴシック', color:'5E5470' })], spacing:{ after:80 } }));
-          }
+          if (el.tagName === 'H2') inner += '<h1>' + esc(txt) + '</h1>';
+          else if (el.tagName === 'DIV' && el.className === 'date') inner += '<div class="date">' + esc(txt) + '</div>';
+          else if (el.tagName === 'H3') inner += '<h2>' + esc(txt) + '</h2>';
+          else if (el.tagName === 'H4') inner += '<h3>' + esc(txt) + '</h3>';
+          else if (el.className === 'closing') inner += '<div class="closing">' + esc(txt) + '</div>';
+          else inner += '<p>' + esc(txt) + '</p>';
         }
       } else {
-        // フォールバック：report_textをそのまま段落化
-        (LATEST.report_text||'').split('\n').forEach(l=>{ if(l.trim()) children.push(new Paragraph({ children:[new TextRun({ text:l.trim(), size:21, font:'游ゴシック' })] })); });
+        (LATEST.report_text||'').split('\n').forEach(l => { if (l.trim()) inner += '<p>' + esc(l.trim()) + '</p>'; });
       }
-      const doc = new Document({ sections:[{ properties:{}, children }] });
-      Packer.toBlob(doc).then(blob => {
-        saveAs(blob, fname);
-        toast('Wordファイルをダウンロードしました');
-      }).catch(e => { toast('Word生成に失敗：' + e.message); });
+      // Wordが直接開けるHTML形式の.docを生成（外部ライブラリ不要・全環境で動作）
+      const docHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+        + '<head><meta charset="utf-8"><title>report</title>'
+        + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->'
+        + '<style>'
+        + '@page { size: A4; margin: 2.5cm; }'
+        + 'body { font-family: "Yu Gothic","游ゴシック",sans-serif; font-size: 10.5pt; line-height: 1.85; color: #333; }'
+        + 'h1 { font-size: 15pt; color: #270949; border-bottom: 2px solid #F7D45C; padding-bottom: 6pt; margin-bottom: 4pt; }'
+        + 'h2 { font-size: 12pt; color: #4D2080; margin-top: 16pt; margin-bottom: 4pt; }'
+        + 'h3 { font-size: 11pt; color: #241A32; margin-top: 10pt; margin-bottom: 2pt; }'
+        + '.date { text-align: right; color: #888; font-size: 9pt; margin-bottom: 12pt; }'
+        + 'p { margin: 4pt 0; }'
+        + '.closing { border-left: 3px solid #F7D45C; padding-left: 10pt; color: #5E5470; margin-top: 16pt; font-style: italic; }'
+        + '</style></head><body>' + inner + '</body></html>';
+      const blob = new Blob(['\ufeff' + docHtml], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast('Wordファイルをダウンロードしました');
     } catch (e) {
       toast('Word生成に失敗：' + e.message);
     }
@@ -871,26 +878,67 @@ const GH = {
   }
 
   // ============================================================
-  //  ④ クライアント用メール — モーダル表示・コピー・Gmailで開く
+  //  ④ クライアント用メール（3パターン）— 選択・コピー・Gmailで開く
   // ============================================================
+  let mailVariants = [];   // [{label, subject, body}]
+  let mailIndex = 0;
+  function buildMailVariants() {
+    // email_variants があればそれを使う。無ければ従来の単一データを1案として扱う
+    if (LATEST && Array.isArray(LATEST.email_variants) && LATEST.email_variants.length) {
+      return LATEST.email_variants.map(v => ({
+        label: v.label || v.id || 'メール案',
+        subject: v.subject || '(件名なし)',
+        body: v.body || '',
+      }));
+    }
+    if (LATEST && (LATEST.email_subject || LATEST.email_body)) {
+      return [{ label: 'メール案', subject: LATEST.email_subject || '(件名なし)', body: LATEST.email_body || '' }];
+    }
+    return [];
+  }
   function openMailModal() {
     if (!LATEST) { toast('メールがまだ生成されていません'); return; }
-    document.getElementById('mail-subject').textContent = LATEST.email_subject || '(件名なし)';
-    document.getElementById('mail-body').textContent = LATEST.email_body || '';
+    mailVariants = buildMailVariants();
+    if (!mailVariants.length) { toast('メールがまだ生成されていません'); return; }
+    mailIndex = 0;
+    const tabs = document.getElementById('mail-tabs');
+    tabs.innerHTML = '';
+    // 1案だけのときはタブを出さない
+    if (mailVariants.length > 1) {
+      mailVariants.forEach((v, i) => {
+        const b = document.createElement('button');
+        b.className = 'sns-tab' + (i===0?' active':'');
+        b.textContent = v.label;
+        b.onclick = () => selectMail(i);
+        tabs.appendChild(b);
+      });
+    }
+    selectMail(0);
     openModal('mail-modal');
   }
+  function selectMail(i) {
+    mailIndex = i;
+    document.querySelectorAll('#mail-tabs .sns-tab').forEach((t,idx)=>t.classList.toggle('active', idx===i));
+    const v = mailVariants[i];
+    document.getElementById('mail-subject').textContent = v.subject;
+    document.getElementById('mail-body').textContent = v.body;
+  }
   function copyMail() {
-    if (!LATEST) return;
-    copyText(LATEST.email_body || '', 'メール本文をコピーしました');
+    if (!mailVariants.length) return;
+    copyText(mailVariants[mailIndex].body, 'メール本文をコピーしました');
   }
   function openGmail() {
     if (!LATEST) { toast('メールがまだ生成されていません'); return; }
-    const su = encodeURIComponent(LATEST.email_subject || '');
-    const body = encodeURIComponent(LATEST.email_body || '');
-    // Gmailの新規作成画面を開く（宛先は空＝手で入力）
+    // モーダルを開かずに直接押された場合に備えて、未構築なら構築
+    if (!mailVariants.length) { mailVariants = buildMailVariants(); mailIndex = 0; }
+    if (!mailVariants.length) { toast('メールがまだ生成されていません'); return; }
+    const v = mailVariants[mailIndex];
+    const su = encodeURIComponent(v.subject || '');
+    const body = encodeURIComponent(v.body || '');
+    // Gmailの新規作成（下書き）画面を、選択中の案の件名・本文入りで開く
     const url = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=${su}&body=${body}`;
     window.open(url, '_blank');
-    toast('Gmailの新規作成画面を開きました（宛先を入れて送信）');
+    toast(`「${v.label}」でGmail下書きを開きました（宛先を入れて送信）`);
   }
 
   // ============================================================
