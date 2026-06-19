@@ -642,14 +642,63 @@ const GH = {
     if (editing) body.focus();
   }
 
-  // 今すぐ生成（ワークフロー起動）
+  // 今すぐ生成（ワークフロー起動 → 完了まで自動ポーリング）
+  let _pollTimer = null;
   async function manualRun() {
     if (!GH.connected) { toast('先に「接続設定」を済ませてください'); go('connect'); return; }
-    toast('生成を開始しました。1〜2分で完了します');
+    // 現在の生成日時を記録（完了検知用）
+    const prevStamp = LATEST ? LATEST.generated_at : '';
+    toast('⏳ 生成を開始しました。完了したらお知らせします…');
+    showGenBanner(true);
     try {
       await GH.triggerRun();
-      setTimeout(() => toast('生成中です。完了後ダッシュボードに反映されます'), 3000);
-    } catch (e) { toast('起動に失敗：' + e.message); }
+      // 20秒ごとに最新データをチェックし、generated_atが変わったら完了通知
+      let checks = 0;
+      const maxChecks = 30; // 最大10分（20秒×30回）
+      if (_pollTimer) clearInterval(_pollTimer);
+      _pollTimer = setInterval(async () => {
+        checks++;
+        try {
+          const d = await GH.loadLatest();
+          if (d && d.generated_at && d.generated_at !== prevStamp) {
+            // 完了！
+            clearInterval(_pollTimer); _pollTimer = null;
+            LATEST = d;
+            showGenBanner(false);
+            toast('✅ レポート生成が完了しました！');
+            loadDashboard(); // ダッシュボードを自動更新
+            if (document.getElementById('view-preview').style.display !== 'none') {
+              renderPreview(d); // プレビュー画面も更新
+            }
+          } else if (checks >= maxChecks) {
+            clearInterval(_pollTimer); _pollTimer = null;
+            showGenBanner(false);
+            toast('⚠ 生成の完了が確認できませんでした。手動でリロードしてください');
+          }
+        } catch (e) { /* ポーリング中のエラーは無視して次を待つ */ }
+      }, 20000);
+    } catch (e) {
+      showGenBanner(false);
+      toast('起動に失敗：' + e.message);
+    }
+  }
+  function showGenBanner(show) {
+    let el = document.getElementById('gen-banner');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'gen-banner';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(90deg,var(--purple),var(--purple-3));color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:600;display:none;align-items:center;justify-content:center;gap:10px;';
+      el.innerHTML = '<span class="spin" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> レポートを生成中です…完了したら自動でお知らせします';
+      document.body.appendChild(el);
+      // スピンアニメーション
+      if (!document.getElementById('spin-style')) {
+        const s = document.createElement('style');
+        s.id = 'spin-style';
+        s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(s);
+      }
+    }
+    el.style.display = show ? 'flex' : 'none';
   }
 
   // 接続設定の保存
