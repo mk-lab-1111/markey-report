@@ -253,6 +253,38 @@ def main():
     import shutil
     shutil.copy(docx_path, os.path.join(DOCS, "data", f"report_{stamp}.docx"))
 
+    # --- アーカイブ（過去レポートの蓄積。WEBサイト連携・一覧表示用） ---
+    # レポート本文とNotebookLM素材のみを残す（SNS文・メール文は残さない）。
+    # 直近 MAX_ARCHIVE 件を超えたら古いものから自動的に削除し、容量が際限なく増えないようにする。
+    MAX_ARCHIVE = 30
+    archive_path = os.path.join(DOCS, "data", "archive.json")
+    archive = []
+    if os.path.exists(archive_path):
+        try:
+            with open(archive_path, encoding="utf-8") as f:
+                archive = json.load(f)
+            if not isinstance(archive, list):
+                archive = []
+        except Exception:
+            archive = []  # 壊れていた場合は作り直す
+
+    # 同じ日付(stamp)の古いエントリがあれば差し替え、なければ新規追加
+    archive = [a for a in archive if a.get("stamp") != stamp]
+    archive.append({
+        "stamp": stamp,
+        "generated_at": manifest["generated_at"],
+        "theme": theme,
+        "report_text": report,
+        "notebooklm_text": notebooklm,
+    })
+    # 日付の新しい順に並べ替え、MAX_ARCHIVE件まで保持
+    archive.sort(key=lambda a: a.get("stamp", ""), reverse=True)
+    archive = archive[:MAX_ARCHIVE]
+
+    with open(archive_path, "w", encoding="utf-8") as f:
+        json.dump(archive, f, ensure_ascii=False, indent=2)
+    print(f"🗂 アーカイブ更新（保持件数: {len(archive)}/{MAX_ARCHIVE}）")
+
     print("✅ 完了")
 
 
