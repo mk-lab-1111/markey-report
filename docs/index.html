@@ -104,7 +104,7 @@
   .hero .next .v { font-size: 16px; font-weight: 500; margin-top: 3px; font-family: var(--mincho); }
 
   /* ---------- Stats ---------- */
-  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 26px; }
+  .stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 26px; }
   .stat { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; transition: all .16s; }
   .stat:hover { border-color: var(--gold); box-shadow: var(--shadow); }
   .stat .ic-wrap { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
@@ -280,7 +280,7 @@
           <span style="font-size:12.5px;color:#c9bce0" id="hero-stamp">6月15日（月）07:00 自動生成</span>
         </div>
         <h2 id="hero-theme">中東情勢の再燃と建材価格への影響</h2>
-        <div class="meta">各社対応事例レポート ／ X投稿3案 ／ メール下書き ／ インフォグラフィック素材</div>
+        <div class="meta">各社対応事例レポート ／ メール下書き（メルマガ要約型）</div>
         <div class="next">
           <div><div class="k">次回自動生成</div><div class="v">6/18（木）07:00</div></div>
           <div><div class="k">配信ペース</div><div class="v">週2回（火・金）</div></div>
@@ -290,9 +290,7 @@
 
       <div class="stat-row">
         <div class="stat"><div class="ic-wrap c-report"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="num">A4 1枚</div><div class="lbl">Wordレポート</div></div>
-        <div class="stat"><div class="ic-wrap c-sns"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4l16 16M20 4L4 20"/></svg></div><div class="num">3案</div><div class="lbl">X投稿文</div></div>
         <div class="stat"><div class="ic-wrap c-mail"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg></div><div class="num">下書き済</div><div class="lbl">クライアントメール</div></div>
-        <div class="stat"><div class="ic-wrap c-nb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div class="num">素材化</div><div class="lbl">NotebookLM入力用</div></div>
       </div>
 
       <div class="section-head">
@@ -307,23 +305,12 @@
           <div class="acts"><span class="mini" onclick="event.stopPropagation();go('preview')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>修正</span><span class="mini" onclick="event.stopPropagation();downloadWord()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>ダウンロード</span></div>
         </div>
 
-        <div class="out" style="--tagc:var(--gold)" onclick="openSnsModal()">
-          <div class="head"><div class="tag c-sns"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4l16 16M20 4L4 20"/></svg></div><div><div class="ti">X投稿文（3案）</div><div class="meta" id="card-sns-meta">sns_20260615.txt</div></div></div>
-          <div class="prev" id="card-sns-prev">【A 問いかけ型】価格上昇が続く今、「高いから売れない」で止まっていませんか？実は4月に過去最高受注の住宅会社が続出。差は&quot;市場の捉え方&quot;にあります。 #住宅業界 #工務店…</div>
-          <div class="acts"><span class="mini" onclick="event.stopPropagation();openSnsModal()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>コピー</span></div>
-        </div>
-
         <div class="out" style="--tagc:var(--ok)" onclick="openMailModal()">
           <div class="head"><div class="tag c-mail"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg></div><div><div class="ti">クライアント用メール</div><div class="meta" id="card-mail-meta">Gmail 下書き作成済み</div></div></div>
           <div class="prev" id="card-mail-prev">いつも大変お世話になっております。鶴田でございます。中東情勢について、現在ご対応中かとは存じますが、ご支援先および聞き及んでいる他社の対応事例を簡易的にまとめましたのでご共有させていただきます…</div>
           <div class="acts"><span class="mini" onclick="event.stopPropagation();openGmail()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14L21 3"/></svg>Gmailで開く</span></div>
         </div>
 
-        <div class="out" style="--tagc:var(--warn)" onclick="openNbModal()">
-          <div class="head"><div class="tag c-nb"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div><div class="ti">インフォグラフィック素材</div><div class="meta" id="card-nb-meta">notebooklm_input_20260615.txt</div></div></div>
-          <div class="prev" id="card-nb-prev">タイトル：8月までが勝負。中東リスクを受注の波に ／ ■今の市場で起きていること：建材コストは継続的に上昇。同じ予算で同じ家は建てられない局面に…</div>
-          <div class="acts"><span class="mini" onclick="event.stopPropagation();copyNb()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>コピー</span></div>
-        </div>
       </div>
     </div>
 
@@ -355,9 +342,7 @@
         <div class="editor-list" id="ef-list">
           <div class="ef active" data-ef="report"><div>レポート本文の型</div><div class="d">02_report.txt</div></div>
           <div class="ef" data-ef="research"><div>情報収集の指示</div><div class="d">01_research.txt</div></div>
-          <div class="ef" data-ef="sns"><div>X投稿の型</div><div class="d">03_sns.txt</div></div>
-          <div class="ef" data-ef="email"><div>メールの型</div><div class="d">04_email.txt</div></div>
-          <div class="ef" data-ef="nb"><div>NotebookLM素材の型</div><div class="d">05_notebooklm.txt</div></div>
+          <div class="ef" data-ef="email"><div>メールの型（メルマガ要約型）</div><div class="d">04_email_v3_summary.txt</div></div>
         </div>
         <div class="editor-main">
           <div class="eh"><span class="et" id="ef-title">レポート本文の型</span><button class="btn btn-primary" onclick="savePrompt()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存して反映</button></div>
@@ -373,7 +358,6 @@
         <p style="font-size:13px;color:var(--ink-faint);margin-bottom:24px">ここで設定した内容が、次回（6/18 木 朝7:00）の自動生成に使われます。</p>
         <div class="field"><label>メインテーマ</label><div class="desc">レポートのタイトルや切り口になります</div><input type="text" id="set-theme" value="中東情勢の再燃と建材価格への影響"></div>
         <div class="field"><label>検索キーワード</label><div class="desc">Geminiがこの言葉で最新ニュースを探します（スペース区切り）</div><input type="text" id="set-keywords" value="住宅業界 建材 価格 受注 中東情勢 原油 工務店"></div>
-        <div class="field"><label>生成モデル</label><div class="desc">通常はFlashで十分です。品質を上げたいときはProに</div><select id="set-model"><option value="gemini-2.0-flash">gemini-2.0-flash（速い・無料）</option><option value="gemini-2.5-pro">gemini-2.5-pro（高品質・無料枠あり）</option></select></div>
         <button class="btn btn-primary" onclick="saveTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存して反映</button>
       </div>
     </div>
@@ -398,25 +382,6 @@
 </div>
 
 
-<!-- ===== SNS MODAL ===== -->
-<div class="modal-overlay" id="sns-modal" onclick="if(event.target===this)closeModal('sns-modal')">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="mt"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4l16 16M20 4L4 20"/></svg>X投稿文（3案から選ぶ）</div>
-      <button class="modal-close" onclick="closeModal('sns-modal')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="sns-tabs" id="sns-tabs"></div>
-      <div class="sns-text" id="sns-text"></div>
-      <div class="sns-count" id="sns-count"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn" onclick="closeModal('sns-modal')">閉じる</button>
-      <button class="btn btn-gold" onclick="copySnsCurrent()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>この案をコピー</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===== MAIL MODAL ===== -->
 <div class="modal-overlay" id="mail-modal" onclick="if(event.target===this)closeModal('mail-modal')">
   <div class="modal">
@@ -432,23 +397,6 @@
     <div class="modal-foot">
       <button class="btn" onclick="copyMail()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>本文をコピー</button>
       <button class="btn btn-primary" onclick="openGmail()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14L21 3"/></svg>Gmailで開く</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== NOTEBOOKLM MODAL ===== -->
-<div class="modal-overlay" id="nb-modal" onclick="if(event.target===this)closeModal('nb-modal')">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="mt"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>インフォグラフィック素材（NotebookLM用）</div>
-      <button class="modal-close" onclick="closeModal('nb-modal')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-text" id="nb-text"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn" onclick="closeModal('nb-modal')">閉じる</button>
-      <button class="btn btn-primary" onclick="copyNb()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>素材をコピー</button>
     </div>
   </div>
 </div>
@@ -569,11 +517,9 @@ const GH = {
   const prompts = {
     report: "あなたは住宅会社向けの経営コンサルタントです。\n以下のリサーチ結果をもとに「市場環境変化への各社対応事例レポート」を作成してください。\n\n# 構成（この順序を厳守）\n1. タイトル\n2. 日付\n3. 【セクション1】受注関連の対応方針（他社事例）3〜5項目\n4. 【セクション2】工事関連の対応方針（他社事例）3〜4項目\n5. 締め：注意書き\n\n# 文体ルール\n- 丁寧・ビジネス的・提案調（断定を避ける）\n- 各項目は「■見出し」＋本文2〜4行\n- 誇張や煽りは避ける",
     research: "あなたは住宅業界専門のリサーチャーです。\n以下のキーワードに関する直近1週間の最新ニュースを調べ、\n住宅会社の経営者が知るべき情報を箇条書き最大8件でまとめてください。\n\n# 出力ルール\n- 各項目は「【見出し】本文1〜2行」\n- 事実ベースで、チャンス・脅威が分かる視点を含める\n- 前置き不要、箇条書きのみ",
-    sns: "以下のレポート内容をもとにX投稿文を3パターン作成してください。\n\n- 各140字以内（厳守）\n- ハッシュタグ2〜3個\n- パターンA：問いかけ型\n- パターンB：事実・データ型\n- パターンC：行動喚起型",
-    email: "コンサルタント鶴田として、レポート添付メールを書いてください。\n\n# 文体の参考\nいつも大変お世話になっております。鶴田でございます。\n〇〇について、ご支援先および聞き及んでいる他社の対応事例を簡易的にまとめましたのでご共有させていただきます。\n\n# ルール\n- 全体5〜8行。長くしない\n- 宛名は入れない（手で入れるため）\n- 署名は自動付与",
-    nb: "以下のレポートを、NotebookLMで1枚のインフォグラフィックを作る入力素材に変換してください。\n\n# 構成\nタイトル / 今の市場で起きていること / 注目すべき数字3つ / 今すぐやるべき3つ / ひとことメッセージ"
+    email: "コンサルタント鶴田として、レポート要約メール（メルマガ型）を書いてください。\n\n# 構成\n1. 挨拶文（3〜4行）\n2. レポート要約文（◆見出し3〜4項目・15行以内）\n\n# ルール\n- 宛名は入れない（手で入れるため）\n- 署名は自動付与\n- 件名も提案する"
   };
-  const efTitles = { report:"レポート本文の型", research:"情報収集の指示", sns:"X投稿の型", email:"メールの型", nb:"NotebookLM素材の型" };
+  const efTitles = { report:"レポート本文の型", research:"情報収集の指示", email:"メールの型（メルマガ要約型）" };
 
   function go(view) {
     // レポート画面・SNS等を開くときにデータ未取得なら読み込む
@@ -589,7 +535,7 @@ const GH = {
   document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => go(n.dataset.view)));
 
   // プロンプトとファイルパスの対応
-  const efPath = { report:"prompts/02_report.txt", research:"prompts/01_research.txt", sns:"prompts/03_sns.txt", email:"prompts/04_email.txt", nb:"prompts/05_notebooklm.txt" };
+  const efPath = { report:"prompts/02_report.txt", research:"prompts/01_research.txt", email:"prompts/04_email_v3_summary.txt" };
 
   let curEf = 'report';
   function loadEf(ef) {
@@ -618,16 +564,18 @@ const GH = {
     if (!GH.connected) { toast('先に「接続設定」を済ませてください'); go('connect'); return; }
     const theme = document.getElementById('set-theme').value;
     const keywords = document.getElementById('set-keywords').value;
-    const model = document.getElementById('set-model').value;
     toast('保存中...');
     try {
-      // 既存config.yamlを取得して該当行だけ差し替え
+      // 既存config.yamlを取得して該当行だけ差し替え（行頭アンカーで誤マッチ防止）
       const { content } = await GH.getFile('config.yaml');
       let updated = content
-        .replace(/theme:.*$/m, `theme: "${theme}"`)
-        .replace(/keywords:.*$/m, `keywords: "${keywords}"`)
-        .replace(/model:.*$/m, `model: "${model}"`);
+        .replace(/^theme:.*$/m, `theme: "${theme}"`)
+        .replace(/^keywords:.*$/m, `keywords: "${keywords}"`);
       await GH.putFile('config.yaml', updated, 'update theme');
+      // 保存成功後すぐにUI（ヒーロー見出し・入力欄）を新テーマで更新
+      _themeDirty = true;
+      document.getElementById('hero-theme').textContent = theme;
+      document.getElementById('set-theme').value = theme;
       toast('設定を保存しました。次回の自動生成に反映されます');
     } catch (e) { toast('保存に失敗：' + e.message); }
   }
@@ -736,6 +684,9 @@ const GH = {
     loadDashboard();
   }
 
+  // テーマ保存後に latest.json のロードで上書きされるのを防ぐフラグ
+  let _themeDirty = false;
+
   // 最新の生成データをダッシュボードに反映
   let LATEST = null;
   async function loadDashboard() {
@@ -744,7 +695,9 @@ const GH = {
       LATEST = d;
       if (d.theme) {
         document.getElementById('hero-theme').textContent = d.theme;
-        document.getElementById('set-theme').value = d.theme;
+        // set-theme はユーザーが入力中でなければ latest.json の値で初期表示する
+        // （saveTheme後はsaveTheme側でUIを即時更新するためここは上書きしない）
+        if (!_themeDirty) document.getElementById('set-theme').value = d.theme;
       }
       // 日付表示（generated_at優先、なければstampから整形）
       const stampEl = document.getElementById('hero-stamp');
@@ -763,14 +716,10 @@ const GH = {
       // カードのファイル名（stamp連動）
       const stamp = d.stamp || '';
       setText('card-report-meta', stamp ? `report_${stamp}.docx` : '');
-      setText('card-sns-meta', stamp ? `sns_${stamp}.txt` : '');
       setText('card-mail-meta', d.email_subject ? 'Gmail 下書き作成済み' : '');
-      setText('card-nb-meta', stamp ? `notebooklm_input_${stamp}.txt` : '');
       // プレビュー文章（先頭部分を抜粋）
       if (d.report_text) setText('card-report-prev', excerptReport(d.report_text));
-      if (d.sns_text) setText('card-sns-prev', truncate(d.sns_text.replace(/\n/g, ' '), 140));
       if (d.email_body) setText('card-mail-prev', truncate(d.email_body.replace(/\n/g, ' '), 140));
-      if (d.notebooklm_text) setText('card-nb-prev', truncate(d.notebooklm_text.replace(/\n/g, ' '), 140));
       // レポート確認・修正画面に実データを描画
       renderPreview(d);
       // ファイル名表示
@@ -874,60 +823,7 @@ const GH = {
   }
 
   // ============================================================
-  //  ③ X投稿文（A/B/C案）— パース・タブ切替・コピー
-  // ============================================================
-  let snsCases = [];   // [{label, text}]
-  let snsIndex = 0;
-  function parseSns(raw) {
-    raw = (raw || '').trim();
-    if (!raw) return [];
-    // 【A 問いかけ型】... 【B ...】... のような見出しで分割
-    const re = /【([^】]+)】/g;
-    let matches = [], m;
-    while ((m = re.exec(raw)) !== null) matches.push({ label:m[1].trim(), start:m.index, headEnd:re.lastIndex });
-    if (matches.length === 0) return [{ label:'A案', text:raw }];
-    const cases = [];
-    for (let i = 0; i < matches.length; i++) {
-      const cur = matches[i];
-      const end = (i+1 < matches.length) ? matches[i+1].start : raw.length;
-      cases.push({ label:cur.label, text:raw.slice(cur.headEnd, end).trim() });
-    }
-    return cases;
-  }
-  function openSnsModal() {
-    if (!LATEST || !LATEST.sns_text) { toast('X投稿文がまだ生成されていません'); return; }
-    snsCases = parseSns(LATEST.sns_text);
-    snsIndex = 0;
-    const tabs = document.getElementById('sns-tabs');
-    tabs.innerHTML = '';
-    snsCases.forEach((c, i) => {
-      const b = document.createElement('button');
-      b.className = 'sns-tab' + (i===0?' active':'');
-      b.textContent = c.label;
-      b.onclick = () => selectSns(i);
-      tabs.appendChild(b);
-    });
-    selectSns(0);
-    openModal('sns-modal');
-  }
-  function selectSns(i) {
-    snsIndex = i;
-    document.querySelectorAll('#sns-tabs .sns-tab').forEach((t,idx)=>t.classList.toggle('active', idx===i));
-    const c = snsCases[i];
-    document.getElementById('sns-text').textContent = c.text;
-    // 文字数カウント（ハッシュタグ含む実際の文字数）
-    const len = [...c.text].length;
-    const cnt = document.getElementById('sns-count');
-    cnt.textContent = `${len} 文字 ／ 目安140文字`;
-    cnt.classList.toggle('over', len > 140);
-  }
-  function copySnsCurrent() {
-    if (!snsCases.length) return;
-    copyText(snsCases[snsIndex].text, `${snsCases[snsIndex].label} をコピーしました`);
-  }
-
-  // ============================================================
-  //  ④ クライアント用メール（3パターン）— 選択・コピー・Gmailで開く
+  //  ③ クライアント用メール（メルマガ要約型）— 表示・コピー・Gmailで開く
   // ============================================================
   let mailVariants = [];   // [{label, subject, body}]
   let mailIndex = 0;
@@ -988,19 +884,6 @@ const GH = {
     const url = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&su=${su}&body=${body}`;
     window.open(url, '_blank');
     toast(`「${v.label}」でGmail下書きを開きました（宛先を入れて送信）`);
-  }
-
-  // ============================================================
-  //  ⑤ NotebookLM素材 — モーダル表示・コピー
-  // ============================================================
-  function openNbModal() {
-    if (!LATEST || !LATEST.notebooklm_text) { toast('インフォグラフィック素材がまだ生成されていません'); return; }
-    document.getElementById('nb-text').textContent = LATEST.notebooklm_text;
-    openModal('nb-modal');
-  }
-  function copyNb() {
-    if (!LATEST) return;
-    copyText(LATEST.notebooklm_text || '', '素材をコピーしました（NotebookLMに貼り付け）');
   }
 
   // ============================================================

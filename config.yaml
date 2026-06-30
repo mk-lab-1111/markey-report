@@ -9,10 +9,8 @@ theme: "住宅業界ニュース　購入者のニーズと基準　価格　住
 # 検索キーワード（任意。空でも自動探索します。指定すると検索の方向づけに使われます）
 keywords: "住宅業界ニュース　購入者のニーズと基準　価格　住宅ローン"
 
-# メールは毎回3パターン自動生成されます（丁寧／シンプル／簡潔）。
-# アプリの画面で3つから選んでGmail下書きに送れます。
-# ↓ ここは下書き(Gmail連携)に使う代表パターンの指定です（通常はv1_politeでOK）
-email_template: "v1_polite"
+# メールはメルマガ要約型（v3_summary）で自動生成されます。
+email_template: "v3_summary"
 
 # 会社差出人情報（署名に使われます。基本は変えなくてOK）
 sender:
@@ -22,9 +20,8 @@ sender:
   mail: "m.tsuruta@markey-consulting.com"
   hp: "https://markey-consulting.com/"
 
-# 使用するGeminiモデル（無料枠で十分。基本変えなくてOK）
-# 速度優先: gemini-2.5-flash  /  品質優先: gemini-2.5-pro
-model: "gemini-2.0-flash"
+# 使用するGeminiモデル（固定。変更不要）
+model: "gemini-2.5-flash-lite"
 
 # Google Drive 保存先フォルダID（任意。空ならマイドライブ直下に作成）
 drive_folder_id: ""
