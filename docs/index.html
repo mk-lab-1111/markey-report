@@ -283,7 +283,7 @@
         <div class="meta">各社対応事例レポート ／ メール下書き（メルマガ要約型）</div>
         <div class="next">
           <div><div class="k">次回自動生成</div><div class="v" id="next-run-hero">—</div></div>
-          <div><div class="k">配信ペース</div><div class="v">週2回（月・木）20:00</div></div>
+          <div><div class="k">配信ペース</div><div class="v">週2回（月・木）朝5:00</div></div>
           <div><div class="k">今月の生成</div><div class="v">6 / 8 回</div></div>
         </div>
       </div>
@@ -355,7 +355,7 @@
     <div class="content view" id="view-settings">
       <div class="card" style="padding:28px;max-width:640px">
         <h3 style="font-family:var(--mincho);font-size:17px;font-weight:600;margin-bottom:6px">今週のテーマ設定</h3>
-        <p style="font-size:13px;color:var(--ink-faint);margin-bottom:24px">ここで設定した内容が、次回の自動生成（月・木 20:00）に使われます。</p>
+        <p style="font-size:13px;color:var(--ink-faint);margin-bottom:24px">ここで設定した内容が、次回の自動生成（月・木 朝5:00）に使われます。</p>
         <div class="field"><label>メインテーマ</label><div class="desc">レポートのタイトルや切り口になります</div><input type="text" id="set-theme" value="中東情勢の再燃と建材価格への影響"></div>
         <div class="field"><label>検索キーワード</label><div class="desc">Geminiがこの言葉で最新ニュースを探します（スペース区切り）</div><input type="text" id="set-keywords" value="住宅業界 建材 価格 受注 中東情勢 原油 工務店"></div>
         <button class="btn btn-primary" onclick="saveTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存して反映</button>
@@ -931,10 +931,12 @@ const GH = {
     return truncate(cleaned, 140);
   }
 
-  // cron "0 11 * * 1,4" UTC (= 月・木 20:00 JST) から次回実行日時を動的に計算
+  // cron "0 20 * * 0,3" UTC (= 月・木 05:00 JST) から次回実行日時を動的に計算
+  // 月曜05:00 JST = 日曜20:00 UTC (UTC曜日=0)
+  // 木曜05:00 JST = 水曜20:00 UTC (UTC曜日=3)
   function calcNextRun() {
-    const RUN_DAYS_UTC = [1, 4]; // 月=1, 木=4
-    const RUN_HOUR_UTC = 11;
+    const RUN_DAYS_UTC = [0, 3]; // 日=0, 水=3
+    const RUN_HOUR_UTC = 20;
     const now = new Date();
     for (let d = 0; d <= 7; d++) {
       const c = new Date(Date.UTC(
@@ -946,7 +948,7 @@ const GH = {
         const m = jst.getUTCMonth() + 1;
         const day = jst.getUTCDate();
         const wd = ['日','月','火','水','木','金','土'][jst.getUTCDay()];
-        return `${m}/${day}（${wd}）20:00`;
+        return `${m}/${day}（${wd}）05:00`;
       }
     }
     return '—';
