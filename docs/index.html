@@ -255,7 +255,7 @@
     </nav>
     <div class="sidebar-foot">
       <div class="st"><span class="dot"></span>自動実行：稼働中</div>
-      <div class="nx">次回 6/18（木）07:00</div>
+      <div class="nx" id="next-run-sidebar">次回 —</div>
     </div>
   </aside>
 
@@ -282,8 +282,8 @@
         <h2 id="hero-theme">中東情勢の再燃と建材価格への影響</h2>
         <div class="meta">各社対応事例レポート ／ メール下書き（メルマガ要約型）</div>
         <div class="next">
-          <div><div class="k">次回自動生成</div><div class="v">6/18（木）07:00</div></div>
-          <div><div class="k">配信ペース</div><div class="v">週2回（火・金）</div></div>
+          <div><div class="k">次回自動生成</div><div class="v" id="next-run-hero">—</div></div>
+          <div><div class="k">配信ペース</div><div class="v">週2回（月・木）20:00</div></div>
           <div><div class="k">今月の生成</div><div class="v">6 / 8 回</div></div>
         </div>
       </div>
@@ -355,7 +355,7 @@
     <div class="content view" id="view-settings">
       <div class="card" style="padding:28px;max-width:640px">
         <h3 style="font-family:var(--mincho);font-size:17px;font-weight:600;margin-bottom:6px">今週のテーマ設定</h3>
-        <p style="font-size:13px;color:var(--ink-faint);margin-bottom:24px">ここで設定した内容が、次回（6/18 木 朝7:00）の自動生成に使われます。</p>
+        <p style="font-size:13px;color:var(--ink-faint);margin-bottom:24px">ここで設定した内容が、次回の自動生成（月・木 20:00）に使われます。</p>
         <div class="field"><label>メインテーマ</label><div class="desc">レポートのタイトルや切り口になります</div><input type="text" id="set-theme" value="中東情勢の再燃と建材価格への影響"></div>
         <div class="field"><label>検索キーワード</label><div class="desc">Geminiがこの言葉で最新ニュースを探します（スペース区切り）</div><input type="text" id="set-keywords" value="住宅業界 建材 価格 受注 中東情勢 原油 工務店"></div>
         <button class="btn btn-primary" onclick="saveTheme()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存して反映</button>
@@ -931,12 +931,39 @@ const GH = {
     return truncate(cleaned, 140);
   }
 
+  // cron "0 11 * * 1,4" UTC (= 月・木 20:00 JST) から次回実行日時を動的に計算
+  function calcNextRun() {
+    const RUN_DAYS_UTC = [1, 4]; // 月=1, 木=4
+    const RUN_HOUR_UTC = 11;
+    const now = new Date();
+    for (let d = 0; d <= 7; d++) {
+      const c = new Date(Date.UTC(
+        now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + d,
+        RUN_HOUR_UTC, 0, 0, 0
+      ));
+      if (RUN_DAYS_UTC.includes(c.getUTCDay()) && c > now) {
+        const jst = new Date(c.getTime() + 9 * 3600 * 1000);
+        const m = jst.getUTCMonth() + 1;
+        const day = jst.getUTCDate();
+        const wd = ['日','月','火','水','木','金','土'][jst.getUTCDay()];
+        return `${m}/${day}（${wd}）20:00`;
+      }
+    }
+    return '—';
+  }
+
   // 起動時に接続情報を入力欄へ復元
   (function init() {
     const c = GH.cfg;
     if (c.owner) document.getElementById('gh-owner').value = c.owner;
     if (c.repo) document.getElementById('gh-repo').value = c.repo;
     if (c.token) document.getElementById('gh-token').value = c.token;
+    // 次回自動生成日を動的に設定
+    const nr = calcNextRun();
+    const h = document.getElementById('next-run-hero');
+    const s = document.getElementById('next-run-sidebar');
+    if (h) h.textContent = nr;
+    if (s) s.textContent = '次回 ' + nr;
     refreshStatus();
   })();
 
