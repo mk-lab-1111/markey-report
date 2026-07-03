@@ -448,7 +448,7 @@ const GH = {
   async getFile(path) {
     const c = this.cfg;
     const url = `https://api.github.com/repos/${c.owner}/${c.repo}/contents/${path}?ref=${c.branch}`;
-    const res = await fetch(url, { headers: this._headers() });
+    const res = await fetch(url, { headers: this._headers(), cache: 'no-store' });
     if (!res.ok) throw new Error(`取得失敗: ${path} (${res.status})`);
     const data = await res.json();
     return {
@@ -650,7 +650,7 @@ const GH = {
           );
         }
       } catch (_) { /* アーカイブ更新失敗は非致命的 */ }
-      toast('保存しました。公開ページ「MARKEY REPORT」に反映されます（1〜5分ほどかかります）');
+      toast('保存しました。公開ページへの反映は最大数分かかります（同一セッション中は即時反映済み）');
     } catch (e) {
       toast('保存に失敗：' + e.message);
     }
@@ -760,7 +760,10 @@ const GH = {
   async function loadDashboard() {
     try {
       const d = await GH.loadLatest();
-      LATEST = d;
+      // report_text の保存済み編集を GitHub Pages の遅延キャッシュで上書きしない
+      LATEST = _reportDirty
+        ? Object.assign({}, d, { report_text: LATEST ? LATEST.report_text : d.report_text })
+        : d;
       if (d.theme) {
         document.getElementById('hero-theme').textContent = d.theme;
         // set-theme はユーザーが入力中でなければ latest.json の値で初期表示する
