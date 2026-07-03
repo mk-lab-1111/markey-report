@@ -603,10 +603,14 @@ const GH = {
       } else if (el.tagName === 'DIV' && el.className === 'date') {
         lines.push('DATE: ' + txt);
         lines.push('---');
-      } else if (el.tagName === 'H3') {
-        lines.push('SECTION: ' + txt);
-      } else if (el.tagName === 'H4') {
-        lines.push(txt); // ■ はテキストに含まれている
+      } else if (el.tagName === 'H3' || el.tagName === 'H4') {
+        // タグ種別ではなく内容パターンで判定する
+        // contenteditable 編集でブラウザがタグ種別を変えても■の有無で正しい階層に保存される
+        if (txt.startsWith('■')) {
+          lines.push(txt);               // ■ 小見出し → そのまま（SECTION: を二重付与しない）
+        } else {
+          lines.push('SECTION: ' + txt); // それ以外の見出し → 大見出しとして保存
+        }
       } else if (el.className === 'closing') {
         lines.push(txt);
       } else {
@@ -825,7 +829,13 @@ const GH = {
       }
       if (ln.startsWith('DATE:')) { dateStr = ln.replace('DATE:','').trim(); continue; }
       if (ln === '---') { started = true; continue; }
-      if (ln.startsWith('SECTION:')) { html += '<h3>' + escapeHtml(ln.replace('SECTION:','').trim()) + '</h3>'; started = true; continue; }
+      if (ln.startsWith('SECTION:')) {
+        const sc = ln.replace('SECTION:', '').trim();
+        // 「SECTION: ■ X」のように SECTION: と ■ が両方付いた崩れデータも小見出し(H4)として扱う
+        if (sc.startsWith('■')) { html += '<h4>' + escapeHtml(sc) + '</h4>'; }
+        else { html += '<h3>' + escapeHtml(sc) + '</h3>'; }
+        started = true; continue;
+      }
       if (ln.startsWith('■')) { html += '<h4>' + escapeHtml(ln) + '</h4>'; started = true; continue; }
       // 締め（注意書き）っぽい行
       if (ln.indexOf('情報提供') >= 0 || ln.indexOf('ご検討') >= 0 || ln.indexOf('肝要') >= 0) {
