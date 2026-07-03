@@ -320,11 +320,12 @@
         <p style="font-size:13px;color:var(--ink-faint)">生成されたレポートです。本文をクリックすると直接修正できます。</p>
         <div style="display:flex;gap:10px">
           <button class="btn" onclick="toggleEdit()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span id="edit-btn-label">修正モード</span></button>
+          <button class="btn btn-gold" onclick="saveReport()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>修正を保存</button>
           <button class="btn btn-primary" onclick="downloadWord()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Wordで保存</button>
         </div>
       </div>
       <div class="doc-preview">
-        <div class="edit-banner" id="edit-banner"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>修正モード：本文を直接書き換えられます。「Wordで保存」を押すと修正後の内容で保存されます</div>
+        <div class="edit-banner" id="edit-banner"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>修正モード：本文を直接書き換えられます。　「修正を保存」→ 公開ページ「MARKEY REPORT」に反映　／　「Wordで保存」→ Word ファイルのダウンロードのみ（公開ページには反映されません）</div>
         <div class="doc-toolbar">
           <span class="dt"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span id="doc-filename">report_20260615.docx</span> ・ A4縦</span>
           <span class="saved">Driveに保存済み</span>
@@ -590,6 +591,71 @@ const GH = {
     if (editing) body.focus();
   }
 
+  // #doc-body の contenteditable 内容を report_text 形式のテキストに変換
+  function docBodyToReportText() {
+    const body = document.getElementById('doc-body');
+    const lines = [];
+    for (const el of Array.from(body.children)) {
+      const txt = el.textContent.trim();
+      if (!txt) continue;
+      if (el.tagName === 'H2') {
+        lines.push(txt);
+      } else if (el.tagName === 'DIV' && el.className === 'date') {
+        lines.push('DATE: ' + txt);
+        lines.push('---');
+      } else if (el.tagName === 'H3') {
+        lines.push('SECTION: ' + txt);
+      } else if (el.tagName === 'H4') {
+        lines.push(txt); // ■ はテキストに含まれている
+      } else if (el.className === 'closing') {
+        lines.push(txt);
+      } else {
+        lines.push(txt);
+      }
+    }
+    return lines.join('\n');
+  }
+
+  // レポート本文を GitHub の latest.json（および同日付の archive.json）に保存
+  async function saveReport() {
+    if (!GH.connected) { toast('先に「接続設定」を済ませてください'); go('connect'); return; }
+    if (!LATEST) { toast('レポートがまだ読み込まれていません'); return; }
+    const newText = docBodyToReportText();
+    if (!newText.trim()) { toast('保存する内容がありません'); return; }
+    toast('保存中...');
+    try {
+      // LATEST の全フィールドを維持し report_text だけ差し替えて上書き
+      const updated = Object.assign({}, LATEST, { report_text: newText });
+      await GH.putFile(
+        'docs/data/latest.json',
+        JSON.stringify(updated, null, 2),
+        'update report text via editor'
+      );
+      // JS変数も新しいテキストで更新し、以降の renderPreview が古い内容で上書きしないようにする
+      LATEST.report_text = newText;
+      _reportDirty = true;
+      // ダッシュボードのカードプレビューも即時更新
+      setText('card-report-prev', excerptReport(newText));
+      // archive.json の同日付エントリも更新（閲覧履歴で古い本文が残らないように）
+      try {
+        const { content: archiveRaw } = await GH.getFile('docs/data/archive.json');
+        const archive = JSON.parse(archiveRaw);
+        const idx = archive.findIndex(a => a.stamp === LATEST.stamp);
+        if (idx >= 0) {
+          archive[idx].report_text = newText;
+          await GH.putFile(
+            'docs/data/archive.json',
+            JSON.stringify(archive, null, 2),
+            'update archive report text'
+          );
+        }
+      } catch (_) { /* アーカイブ更新失敗は非致命的 */ }
+      toast('保存しました。公開ページ「MARKEY REPORT」に反映されます（1〜5分ほどかかります）');
+    } catch (e) {
+      toast('保存に失敗：' + e.message);
+    }
+  }
+
   // 今すぐ生成（ワークフロー起動 → 完了まで自動ポーリング）
   let _pollTimer = null;
   async function manualRun() {
@@ -686,6 +752,8 @@ const GH = {
 
   // テーマ保存後に latest.json のロードで上書きされるのを防ぐフラグ
   let _themeDirty = false;
+  // レポート本文保存後に renderPreview が古いデータで上書きするのを防ぐフラグ
+  let _reportDirty = false;
 
   // 最新の生成データをダッシュボードに反映
   let LATEST = null;
@@ -718,10 +786,10 @@ const GH = {
       setText('card-report-meta', stamp ? `report_${stamp}.docx` : '');
       setText('card-mail-meta', d.email_subject ? 'Gmail 下書き作成済み' : '');
       // プレビュー文章（先頭部分を抜粋）
-      if (d.report_text) setText('card-report-prev', excerptReport(d.report_text));
+      if (!_reportDirty && d.report_text) setText('card-report-prev', excerptReport(d.report_text));
       if (d.email_body) setText('card-mail-prev', truncate(d.email_body.replace(/\n/g, ' '), 140));
-      // レポート確認・修正画面に実データを描画
-      renderPreview(d);
+      // レポート確認・修正画面に実データを描画（保存済み編集がある場合は上書きしない）
+      if (!_reportDirty) renderPreview(d);
       // ファイル名表示
       if (stamp) setText('doc-filename', `report_${stamp}.docx`);
     } catch (e) { /* まだ生成物がない場合は何もしない */ }
