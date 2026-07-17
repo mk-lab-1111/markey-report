@@ -4,8 +4,7 @@ on:
   schedule:
     # UTC表記。日本時間(JST)はUTC+9時間。
     # 月曜 05:00 JST = 日曜 20:00 UTC（cronの曜日は日曜=0）
-    # 木曜 05:00 JST = 水曜 20:00 UTC（cronの曜日は水曜=3）
-    - cron: "0 20 * * 0,3"
+    - cron: "0 20 * * 0"
   # 手動実行（アプリの「今すぐ生成」ボタンもこれを使う）
   workflow_dispatch:
 
@@ -36,6 +35,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
+          TRIGGER: ${{ github.event_name }}
         run: python main.py
 
       - name: 生成データをアプリ(docs)に反映

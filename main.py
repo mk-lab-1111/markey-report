@@ -114,12 +114,22 @@ def main():
     os.makedirs(OUTPUT, exist_ok=True)
     os.makedirs(os.path.join(DOCS, "data"), exist_ok=True)
 
-    print(f"▶ 指定テーマ: {cfg['theme'] or '（未指定・自動探索）'}")
+    # スケジュール実行(schedule)ではtheme/keywordsを無視し、自動でトピックを選ぶ
+    # 手動実行(workflow_dispatch=「今すぐ生成」)のときのみconfig.yamlのtheme/keywordsを使う
+    trigger = os.environ.get("TRIGGER", "workflow_dispatch")
+    if trigger == "schedule":
+        cfg_theme = ""
+        cfg_keywords = ""
+        print("▶ 自動生成モード（テーマ指定なし・その週のニュースから自動選択）")
+    else:
+        cfg_theme = cfg.get("theme", "") or ""
+        cfg_keywords = cfg.get("keywords", "") or ""
+        print(f"▶ 手動生成モード / 指定テーマ: {cfg_theme or '（未指定・自動探索）'}")
 
     print("① 情報収集中...")
     research_raw = ask_gemini(
         client, model,
-        load_prompt("01_research.txt").format(keywords=cfg.get("keywords", ""), theme=cfg.get("theme", ""), today=today, year=year),
+        load_prompt("01_research.txt").format(keywords=cfg_keywords, theme=cfg_theme, today=today, year=year),
         use_search=True,
     )
 
