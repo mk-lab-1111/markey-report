@@ -770,9 +770,7 @@ const GH = {
         : d;
       if (d.theme) {
         document.getElementById('hero-theme').textContent = d.theme;
-        // set-theme はユーザーが入力中でなければ latest.json の値で初期表示する
-        // （saveTheme後はsaveTheme側でUIを即時更新するためここは上書きしない）
-        if (!_themeDirty) document.getElementById('set-theme').value = d.theme;
+        // 設定画面のテーマ欄は loadConfigTheme() で config.yaml から読むため、ここでは上書きしない
       }
       // 日付表示（generated_at優先、なければstampから整形）
       const stampEl = document.getElementById('hero-stamp');
@@ -1034,6 +1032,18 @@ const GH = {
     return '—';
   }
 
+  // config.yaml からテーマ/キーワードを読み込んで設定画面に表示
+  async function loadConfigTheme() {
+    if (!GH.connected) return;
+    try {
+      const { content } = await GH.getFile('config.yaml');
+      const mTheme = content.match(/^theme:\s*"?([^"\n]*)"?\s*$/m);
+      const mKeys = content.match(/^keywords:\s*"?([^"\n]*)"?\s*$/m);
+      if (mTheme) document.getElementById('set-theme').value = mTheme[1].trim();
+      if (mKeys) document.getElementById('set-keywords').value = mKeys[1].trim();
+    } catch (e) { /* config.yaml 取得失敗時は既定値のまま */ }
+  }
+
   // 起動時に接続情報を入力欄へ復元
   (function init() {
     const c = GH.cfg;
@@ -1047,6 +1057,8 @@ const GH = {
     if (h) h.textContent = nr;
     if (s) s.textContent = '次回 ' + nr;
     refreshStatus();
+    // 設定画面のテーマ/キーワードを config.yaml から読み込む
+    loadConfigTheme();
   })();
 
   let toastTimer;
