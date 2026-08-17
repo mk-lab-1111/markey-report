@@ -627,6 +627,40 @@ const GH = {
     return result;
   }
 
+  // Markdown記法の除去・定型見出し補完・ラベル改行（Python側 table_utils.py と同等の後処理）
+  function cleanReportText(text) {
+    // 1) **太字** / *斜体* / ~~取り消し~~ 等のMarkdown記法を除去
+    text = text.replace(/\*\*(.+?)\*\*/g, '$1');
+    text = text.replace(/__(.+?)__/g, '$1');
+    text = text.replace(/\*(.+?)\*/g, '$1');
+    text = text.replace(/~~(.+?)~~/g, '$1');
+
+    // 2) 定型見出し語を SECTION: に昇格
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const s = lines[i].trim();
+      if (s.startsWith('Executive Summary') && !s.startsWith('SECTION:')) {
+        lines[i] = 'SECTION: ' + s;
+      }
+    }
+
+    // 3) ラベル付き項目を改行で分割
+    const result = [];
+    for (const line of lines) {
+      const s = line.trim();
+      if (/^(SECTION:|TITLE:|DATE:|---|■)/.test(s)) { result.push(line); continue; }
+      // 【…】 形式（日本語1〜4文字）の直前で改行（十分な前文がある場合のみ）
+      let tmp = s.replace(/(.{10,?})(【[ぁ-んァ-ヶー一-龥]{1,4}】)/g, '$1\n$2');
+      // 「短い語＋コロン」形式（直前が文末記号またはコロン）
+      tmp = tmp.replace(/([。.!！）\)】：:])([\u3041-\u3093\u30A1-\u30F6\u30FC\u4E00-\u9FFF・]{2,12}[：:])/g, '$1\n$2');
+      const parts = tmp.split('\n').filter(p => p.trim());
+      result.push(...parts);
+    }
+    // 4) ラベルだけで本文が空の行を除去
+    const emptyLabel = /^(?:[ぁ-んァ-ヶー一-龥・]{2,12}[：:]|【[^】]{1,20}】)$/;
+    return result.filter(l => !emptyLabel.test(l.trim())).join('\n');
+  }
+
   // #doc-body の contenteditable 内容を report_text 形式のテキストに変換
   function docBodyToReportText() {
     const body = document.getElementById('doc-body');
@@ -677,7 +711,7 @@ const GH = {
   async function saveReport() {
     if (!GH.connected) { toast('先に「接続設定」を済ませてください'); go('connect'); return; }
     if (!LATEST) { toast('レポートがまだ読み込まれていません'); return; }
-    const newText = docBodyToReportText();
+    const newText = cleanReportText(docBodyToReportText());
     if (!newText.trim()) { toast('保存する内容がありません'); return; }
     toast('保存中...');
     try {

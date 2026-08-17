@@ -1,6 +1,90 @@
-"""report_text 内のテーブル（Markdown / HTML）を箇条書きに変換するユーティリティ。
+"""report_text 内のテーブル（Markdown / HTML）を箇条書きに変換し、
+Markdown記法の除去・ラベル改行・定型見出しの補完も行うユーティリティ。
 main.py と fix_archive.py から共通で利用する。"""
 import re
+
+
+# ---------------------------------------------------------------------------
+#  Markdown記法の除去
+# ---------------------------------------------------------------------------
+def _strip_markdown(text):
+    """**太字** / *斜体* / __下線__ / _斜体_ などのMarkdown記法を除去する。
+    記法だけ消してテキストは残す。"""
+    # **text** or __text__（太字）
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    # *text* or _text_（斜体）— ただし単語中のアンダースコアは誤検出しやすいので
+    # 前後がスペース or 行頭末 or 日本語の場合のみ
+    text = re.sub(r'(?<=[\s\u3000\u3001-\u9fff])_(.+?)_(?=[\s\u3000\u3001-\u9fff]|$)', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    # ~~取り消し線~~
+    text = re.sub(r'~~(.+?)~~', r'\1', text)
+    return text
+
+
+# ---------------------------------------------------------------------------
+#  定型見出しを SECTION: に昇格
+# ---------------------------------------------------------------------------
+_HEADING_KEYWORDS = [
+    'Executive Summary',
+]
+
+def _promote_known_headings(lines):
+    """定型の見出し語がSECTION:になっていない場合に昇格させる。"""
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        promoted = False
+        for kw in _HEADING_KEYWORDS:
+            if stripped.startswith(kw) and not stripped.startswith('SECTION:'):
+                result.append('SECTION: ' + stripped)
+                promoted = True
+                break
+        if not promoted:
+            result.append(line)
+    return result
+
+
+# ---------------------------------------------------------------------------
+#  ラベル付き項目を改行で分割
+# ---------------------------------------------------------------------------
+
+# 【…】 形式のラベルの直前に改行を挿入
+# 条件: 10文字以上のテキストの後に、日本語のみ1〜4文字の【ラベル】が来る場合
+# → プロダクト名（【フラット35】等）や番号直後（1. 【特集】等）を誤分割しない
+_BRACKET_LABEL_RE = re.compile(
+    r'(?<=.{10})'                                 # 前に十分なテキストがある
+    r'(?=【[ぁ-んァ-ヶー一-龥]{1,4}】)'            # 日本語1〜4文字の【ラベル】
+)
+
+# 「短い語＋全角/半角コロン」形式のラベルの直前に改行を挿入
+# 直前が句読点・括弧閉じ等の文末記号であることを必須とする
+_COLON_LABEL_RE = re.compile(
+    r'(?<=[。.!！）\)】：:])'                        # 直前が文末記号またはコロン（連続ラベル対応）
+    r'(?=[ぁ-んァ-ヶー一-龥・]{2,12}[：:])'         # ラベル本体 + コロン（空白は任意）
+)
+
+def _split_labels(text):
+    """行内に連結されたラベル付き項目を改行で分割する。"""
+    lines = text.split('\n')
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        # SECTION: / TITLE: / DATE: / --- / ■ 等の構造行は触らない
+        if (stripped.startswith('SECTION:') or stripped.startswith('TITLE:')
+                or stripped.startswith('DATE:') or stripped == '---'
+                or stripped.startswith('■')):
+            result.append(line)
+            continue
+
+        # 【…】 形式のラベル直前で改行
+        tmp = _BRACKET_LABEL_RE.sub('\n', stripped)
+        # コロンラベル直前で改行
+        tmp = _COLON_LABEL_RE.sub('\n', tmp)
+
+        split_lines = tmp.split('\n')
+        result.extend(s for s in split_lines if s.strip())
+    return '\n'.join(result)
 
 
 def _shorten_header(h):
@@ -108,7 +192,10 @@ def _convert_html_tables(text):
 
 def convert_tables_in_report(text):
     """report_text内のMarkdownテーブルとHTMLテーブルを箇条書きに変換する。
-    また、SECTION: 行が60文字を超えている場合は本文行として扱い直す。"""
+    また、Markdown記法の除去・定型見出しの補完・ラベル改行も行う。"""
+    # 0) Markdown記法（**太字** 等）を除去
+    text = _strip_markdown(text)
+
     # 1) HTMLテーブルを変換
     text = _convert_html_tables(text)
 
@@ -153,4 +240,19 @@ def convert_tables_in_report(text):
         else:
             final.append(line)
 
-    return '\n'.join(final)
+    # 4) 定型見出し語を SECTION: に昇格
+    final = _promote_known_headings(final)
+
+    # 5) ラベル付き項目を改行で分割
+    text = _split_labels('\n'.join(final))
+
+    # 6) ラベルだけで本文が空の行を除去（読み手の混乱を防ぐ）
+    _empty_label = re.compile(
+        r'^(?:[ぁ-んァ-ヶー一-龥・]{2,12}[：:]|【[^】]{1,20}】)$'
+    )
+    text = '\n'.join(
+        line for line in text.split('\n')
+        if not _empty_label.match(line.strip())
+    )
+
+    return text
