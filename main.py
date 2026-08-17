@@ -19,6 +19,7 @@ from google.genai import types
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from report_builder import build_report_docx
 from google_utils import upload_to_drive, create_gmail_draft
+from table_utils import convert_tables_in_report
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 PROMPTS = os.path.join(BASE, "prompts")
@@ -145,10 +146,11 @@ def main():
     print(f"   採用テーマ: {theme}")
 
     print("② レポート生成中...")
-    report = ask_gemini(
+    report_raw = ask_gemini(
         client, model,
         load_prompt("02_report.txt").format(theme=theme, research=research, today=today, year=year),
     )
+    report = convert_tables_in_report(report_raw)
 
     print("③ メール文面生成中...")
     EMAIL_CLOSING = (
