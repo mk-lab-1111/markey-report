@@ -106,7 +106,10 @@ def main():
     with open(os.path.join(BASE, "config.yaml"), encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
 
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(api_version="v1beta"),
+    )
     model = cfg.get("model", "gemini-2.5-flash-lite")
     sender = cfg["sender"]
     today = datetime.date.today().strftime("%Y年%m月%d日")
